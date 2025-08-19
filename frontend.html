@@ -1,0 +1,365 @@
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --accent-color: #FF8C00;
+            --input-bg: #1a1a1a;
+            --border-color: #444;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .clean-container {
+            padding: 40px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+        .tool-wrapper {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .tool-wrapper h1 {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        .tool-wrapper p.subtitle {
+            font-size: 1.1rem;
+            color: #e0e0e0;
+            margin-bottom: 40px;
+        }
+        .input-area {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        #business-description {
+            width: 100%;
+            padding: 20px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border-radius: 12px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            min-height: 200px;
+        }
+        #business-description::placeholder {
+            color: #888;
+        }
+        #business-description:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+        }
+        #generate-btn {
+            width: 100%;
+            padding: 18px 25px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: var(--shadow);
+        }
+        #generate-btn:hover {
+            background-color: #ff9d2e;
+            transform: translateY(-2px);
+        }
+        #generate-btn:active {
+            transform: translateY(0);
+        }
+        #generate-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .loader-container {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fff;
+            border-bottom-color: var(--accent-color);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .results-container {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid var(--border-color);
+            text-align: left;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        #keywords-output {
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--input-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        #keywords-output table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        #keywords-output th, #keywords-output td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+        #keywords-output th {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        #keywords-output tbody tr {
+            background-color: var(--input-bg);
+            transition: background-color 0.3s;
+        }
+        #keywords-output tbody tr:hover {
+            background-color: #222;
+        }
+        #keywords-output tbody tr:last-child td {
+            border-bottom: none;
+        }
+        #keywords-output td {
+            color: #c4c7c5;
+        }
+        #copy-btn {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        #copy-btn:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+
+<div class="clean-container">
+<div class="tool-wrapper">
+<h1>SEO Keyword Generator</h1>
+<p class="subtitle">Generate a list of relevant SEO keywords to boost your online visibility.</p>
+
+<div class="input-area">
+<textarea id="business-description" placeholder="Describe your business or topic here... (e.g., A tech blog about AI tools for beginners)"></textarea>
+</div>
+<button id="generate-btn">Generate Keywords</button>
+<div id="loader-container" class="loader-container" style="display: none;">
+<div class="loader"></div>
+</div>
+<div id="results-container" class="results-container" style="display: none;">
+<div id="keywords-output"></div>
+<div style="text-align: right;"><button id="copy-btn">Copy to Clipboard</button></div>
+</div>
+</div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get page elements
+        const descriptionTextarea = document.getElementById('business-description');
+        const generateBtn = document.getElementById('generate-btn');
+        const loaderContainer = document.getElementById('loader-container');
+        const resultsContainer = document.getElementById('results-container');
+        const keywordsOutput = document.getElementById('keywords-output');
+        const copyBtn = document.getElementById('copy-btn');
+
+        const showMessage = (message, type = 'error') => {
+            const messageBox = document.createElement('div');
+            messageBox.innerHTML = `<div style="background: ${type === 'error' ? '#f44336' : '#4CAF50'}; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">${message}</div>`;
+            generateBtn.parentNode.insertBefore(messageBox, generateBtn);
+            setTimeout(() => messageBox.remove(), 5000);
+        };
+
+        const generateKeywords = async () => {
+            const userInput = descriptionTextarea.value.trim();
+            if (!userInput) { 
+                showMessage('Please provide a description of your business and target audience.');
+                return;
+            }
+
+            // The system prompt for SEO keyword generation
+            const system_prompt = `You are an expert SEO specialist and content strategist. Your task is to generate a list of 10-15 highly relevant, long-tail SEO keywords based on a user's business description or topic.
+
+            **CORE MISSION:**
+            Generate a list of keywords that are relevant and provide plausible, realistic data for each keyword, including Search Volume, Competition, and CPC.
+
+            **ANALYTICAL PROCESS:**
+            1.  **Analyze the Topic:** Thoroughly analyze the user's business or topic to understand its core concepts and potential search queries.
+            2.  **Generate Keywords:** Create 10-15 unique, relevant keywords.
+            3.  **Generate Data:** For each keyword, assign plausible, realistic values for:
+                * **Search Volume:** A number ranging from 100 to 100,000.
+                * **Competition:** A value from 0.0 to 1.0 (e.g., '0.1' for low competition, '0.7' for medium, '0.9' for high competition).
+                * **CPC (Cost Per Click):** A dollar value from $0.50 to $10.00. The CPC should generally correlate with competition.
+
+            **FINAL OUTPUT FORMAT (MANDATORY):**
+            The response must ONLY be a parsable JSON array of objects, with no conversational text or preamble. The JSON array should contain objects with the following keys: 'keyword' (string), 'searchVolume' (number), 'competition' (number), and 'cpc' (number).`;
+
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            resultsContainer.style.display = 'none';
+            loaderContainer.style.display = 'block';
+            keywordsOutput.innerHTML = ''; // Clear previous output on new attempt
+
+            try {
+                // Use the universal backend endpoint
+                const endpointUrl = `${window.location.origin}/wp-json/webloop/v1/generate-ai-content`;
+
+                // Define the generation_config to explicitly request JSON output from Gemini
+                const generation_config = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "keyword": { "type": "STRING" },
+                                "searchVolume": { "type": "NUMBER" },
+                                "competition": { "type": "NUMBER" },
+                                "cpc": { "type": "NUMBER" }
+                            },
+                            "propertyOrdering": ["keyword", "searchVolume", "competition", "cpc"] // Ensure order
+                        }
+                    }
+                };
+
+                const response = await fetch(endpointUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_prompt: system_prompt,
+                        user_content: userInput,
+                        generation_config: generation_config // Pass the generation_config to the backend
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`API call failed with status ${response.status}. Server response: ${errorData}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Debugging: Log the raw response from the backend to the console
+                console.log('API Response:', data);
+
+                // The backend should return a JSON string in data.ai_response
+                // We need to parse this string into a JavaScript object
+                const parsedAiResponse = JSON.parse(data.ai_response);
+                
+                // Now, display the results in a table format
+                displayTableResults(parsedAiResponse);
+
+            } catch (error) {
+                console.error('Error:', error);
+                keywordsOutput.innerHTML = `<p style="color:#f28b82;">Error: ${error.message}</p>`;
+                resultsContainer.style.display = 'block';
+            } finally {
+                loaderContainer.style.display = 'none';
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Keywords';
+            }
+        };
+
+        // This function will display a table for structured JSON data
+        const displayTableResults = (data) => {
+            let html = `<h2>Generated Keywords & Data</h2>`;
+            
+            if (Array.isArray(data) && data.length > 0) {
+                html += `<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Search Volume</th>
+<th>Competition</th>
+<th>CPC</th>
+</tr>
+</thead>
+<tbody>`;
+
+                data.forEach(item => {
+                    html += `
+<tr>
+<td>${item.keyword || 'N/A'}</td>
+<td>${item.searchVolume ? item.searchVolume.toLocaleString() : 'N/A'}</td>
+<td>${item.competition || 'N/A'}</td>
+<td>$${item.cpc ? item.cpc.toFixed(2) : 'N/A'}</td>
+</tr>
+`;
+                });
+                html += `</tbody></table>`;
+            } else {
+                html += `<p>No structured keyword data was returned. Please try again with a more detailed description.</p>`;
+            }
+
+            keywordsOutput.innerHTML = html;
+            resultsContainer.style.display = 'block';
+        };
+        
+        const copyKeywords = () => {
+            const tableRows = document.querySelectorAll('#keywords-output tbody tr');
+            let textToCopy = "Keyword\tSearch Volume\tCompetition\tCPC\n";
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const keyword = cells[0].innerText;
+                const searchVolume = cells[1].innerText;
+                const competition = cells[2].innerText;
+                const cpc = cells[3].innerText;
+                textToCopy += `${keyword}\t${searchVolume}\t${competition}\t${cpc}\n`;
+            });
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+        };
+
+        generateBtn.addEventListener('click', generateKeywords);
+        copyBtn.addEventListener('click', copyKeywords);
+    });
+</script>
